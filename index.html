@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description"
+        content="App de controle financeiro pessoal com a regra 50/30/20. Gerencie seu salário, gastos e economias.">
+    <meta name="theme-color" content="#0a0e1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title> Finanças da camila </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Splash / Salary Setup Screen -->
+    <div id="screen-setup" class="screen active">
+        <div class="setup-container">
+            <div class="setup-logo">
+                <div class="logo-icon">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                        <circle cx="24" cy="24" r="22" stroke="url(#grad1)" stroke-width="3" />
+                        <path
+                            d="M24 12V36M18 18C18 15.8 20.7 14 24 14S30 15.8 30 18C30 21 24 22 24 24M18 30C18 32.2 20.7 34 24 34S30 32.2 30 30C30 27 24 26 24 24"
+                            stroke="url(#grad1)" stroke-width="2.5" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="grad1" x1="0" y1="0" x2="48" y2="48">
+                                <stop offset="0%" stop-color="#6C5CE7" />
+                                <stop offset="100%" stop-color="#00D2FF" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <h1 class="setup-title">Finanças<span class="highlight"> da dayse</span></h1>
+                <p class="setup-subtitle">Controle seu dinheiro com inteligência</p>
+            </div>
+            <div class="setup-form">
+                <label for="input-salary" class="input-label">Qual é o seu salário mensal?</label>
+                <div class="input-money-wrapper">
+                    <span class="currency-symbol">R$</span>
+                    <input type="number" id="input-salary" placeholder="0,00" min="0" step="0.01" inputmode="decimal">
+                </div>
+                <div class="split-preview" id="split-preview" style="display:none;">
+                    <div class="split-item essencial">
+                        <div class="split-dot"></div>
+                        <span class="split-label">Essencial (60%)</span>
+                        <span class="split-value" id="preview-essencial">R$ 0</span>
+                    </div>
+                    <div class="split-item lazer">
+                        <div class="split-dot"></div>
+                        <span class="split-label">Lazer (40%)</span>
+                        <span class="split-value" id="preview-lazer">R$ 0</span>
+                    </div>
+                    <div class="split-item guardar">
+                        <div class="split-dot"></div>
+                        <span class="split-label">Guardar (R$ 200 fixo)</span>
+                        <span class="split-value" id="preview-guardar">R$ 0</span>
+                    </div>
+                </div>
+                <button id="btn-start" class="btn-primary" disabled>Começar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Screen -->
+    <div id="screen-dashboard" class="screen">
+        <header class="app-header">
+            <div class="header-left">
+                <span class="greeting" id="greeting">Olá!</span>
+                <span class="month-label" id="current-month-label"></span>
+            </div>
+            <button class="btn-icon" id="btn-settings" aria-label="Configurações">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                        d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                </svg>
+            </button>
+        </header>
+
+        <!-- Salary Summary Card -->
+        <div class="salary-card" id="salary-card">
+            <div class="salary-card-bg"></div>
+            <div class="salary-card-content">
+                <span class="salary-card-label">Salário do Mês</span>
+                <span class="salary-card-value" id="salary-display">R$ 0,00</span>
+                <div class="salary-card-row">
+                    <div class="salary-mini">
+                        <span class="mini-label">Gasto</span>
+                        <span class="mini-value spent" id="total-spent">R$ 0</span>
+                    </div>
+                    <div class="salary-mini">
+                        <span class="mini-label">Restante</span>
+                        <span class="mini-value remaining" id="total-remaining">R$ 0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget Categories -->
+        <div class="section-title">Orçamento</div>
+        <div class="budget-cards">
+            <div class="budget-card essencial" id="card-essencial">
+                <div class="budget-card-header">
+                    <div class="budget-emoji">🏠</div>
+                    <div class="budget-info">
+                        <span class="budget-name">Essencial</span>
+                        <span class="budget-percent">60% do resto</span>
+                    </div>
+                </div>
+                <div class="budget-progress-bar">
+                    <div class="budget-progress-fill" id="progress-essencial" style="width:0%"></div>
+                </div>
+                <div class="budget-amounts">
+                    <span>Gasto: <strong id="spent-essencial">R$ 0</strong></span>
+                    <span>Limite: <strong id="limit-essencial">R$ 0</strong></span>
+                </div>
+                <div class="budget-remaining-label">Resta: <strong id="remaining-essencial">R$ 0</strong></div>
+            </div>
+            <div class="budget-card lazer" id="card-lazer">
+                <div class="budget-card-header">
+                    <div class="budget-emoji">🎮</div>
+                    <div class="budget-info">
+                        <span class="budget-name">Lazer</span>
+                        <span class="budget-percent">40% do resto</span>
+                    </div>
+                </div>
+                <div class="budget-progress-bar">
+                    <div class="budget-progress-fill" id="progress-lazer" style="width:0%"></div>
+                </div>
+                <div class="budget-amounts">
+                    <span>Gasto: <strong id="spent-lazer">R$ 0</strong></span>
+                    <span>Limite: <strong id="limit-lazer">R$ 0</strong></span>
+                </div>
+                <div class="budget-remaining-label">Resta: <strong id="remaining-lazer">R$ 0</strong></div>
+            </div>
+            <div class="budget-card guardar" id="card-guardar">
+                <div class="budget-card-header">
+                    <div class="budget-emoji">🐷</div>
+                    <div class="budget-info">
+                        <span class="budget-name">Guardar</span>
+                        <span class="budget-percent">R$ 200 fixo</span>
+                    </div>
+                </div>
+                <div class="budget-progress-bar">
+                    <div class="budget-progress-fill" id="progress-guardar" style="width:0%"></div>
+                </div>
+                <div class="budget-amounts">
+                    <span>Guardado: <strong id="spent-guardar">R$ 0</strong></span>
+                    <span>Meta: <strong id="limit-guardar">R$ 0</strong></span>
+                </div>
+                <div class="budget-remaining-label">Falta guardar: <strong id="remaining-guardar">R$ 0</strong></div>
+            </div>
+        </div>
+
+        <!-- Monthly Chart -->
+        <div class="section-title">Gastos por Mês</div>
+        <div class="chart-card">
+            <canvas id="chart-monthly" height="220"></canvas>
+        </div>
+
+        <!-- All-Time Summary -->
+        <div class="section-title">Resumo Geral (Todos os Meses)</div>
+        <div class="summary-cards">
+            <div class="summary-item">
+                <div class="summary-icon" style="background: rgba(108,92,231,0.15); color: #6C5CE7;">💰</div>
+                <div class="summary-text">
+                    <span class="summary-label">Total Recebido</span>
+                    <span class="summary-value" id="alltime-salary">R$ 0</span>
+                </div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-icon" style="background: rgba(255,71,87,0.15); color: #FF4757;">📉</div>
+                <div class="summary-text">
+                    <span class="summary-label">Total Gasto</span>
+                    <span class="summary-value" id="alltime-spent">R$ 0</span>
+                </div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-icon" style="background: rgba(46,213,115,0.15); color: #2ED573;">💎</div>
+                <div class="summary-text">
+                    <span class="summary-label">Para ter Guardado</span>
+                    <span class="summary-value" id="alltime-savings-target">R$ 0</span>
+                </div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-icon" style="background: rgba(0,210,255,0.15); color: #00D2FF;">✅</div>
+                <div class="summary-text">
+                    <span class="summary-label">Guardado de Fato</span>
+                    <span class="summary-value" id="alltime-savings-actual">R$ 0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expense History -->
+        <div class="section-title">Últimos Lançamentos</div>
+        <div class="expense-list" id="expense-list">
+            <div class="empty-state" id="empty-expenses">
+                <span class="empty-icon">📝</span>
+                <span>Nenhum gasto registrado ainda</span>
+            </div>
+        </div>
+
+        <div class="bottom-spacer"></div>
+
+        <!-- FAB (Add Expense) -->
+        <button class="fab" id="btn-add-expense" aria-label="Adicionar gasto">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Add Expense Modal -->
+    <div class="modal-overlay" id="modal-expense">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <h2 class="modal-title">Novo Gasto</h2>
+
+            <div class="modal-step" id="step-category">
+                <p class="modal-question">De qual categoria vai sair?</p>
+                <div class="category-buttons">
+                    <button class="cat-btn essencial" data-cat="essencial">
+                        <span class="cat-emoji">🏠</span>
+                        <span class="cat-name">Essencial</span>
+                        <span class="cat-desc">60% do restante</span>
+                        <span class="cat-remaining" id="modal-remaining-essencial">Resta: R$ 0</span>
+                    </button>
+                    <button class="cat-btn lazer" data-cat="lazer">
+                        <span class="cat-emoji">🎮</span>
+                        <span class="cat-name">Lazer</span>
+                        <span class="cat-desc">40% do restante</span>
+                        <span class="cat-remaining" id="modal-remaining-lazer">Resta: R$ 0</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-step hidden" id="step-details">
+                <button class="btn-back" id="btn-back-category">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round">
+                        <path d="M19 12H5M12 5l-7 7 7 7" />
+                    </svg>
+                    Voltar
+                </button>
+                <div class="selected-category-badge" id="selected-cat-badge">🏠 Essencial</div>
+                <label for="input-expense-desc" class="input-label">Descrição</label>
+                <input type="text" id="input-expense-desc" placeholder="Ex: Aluguel, Mercado..." class="input-text"
+                    maxlength="50">
+                <label for="input-expense-value" class="input-label">Valor</label>
+                <div class="input-money-wrapper small">
+                    <span class="currency-symbol">R$</span>
+                    <input type="number" id="input-expense-value" placeholder="0,00" min="0" step="0.01"
+                        inputmode="decimal">
+                </div>
+                <button id="btn-save-expense" class="btn-primary" disabled>Salvar Gasto</button>
+            </div>
+
+            <button class="btn-close-modal" id="btn-close-modal" aria-label="Fechar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="modal-settings">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <h2 class="modal-title">Configurações</h2>
+            <label for="input-edit-salary" class="input-label">Alterar salário mensal</label>
+            <div class="input-money-wrapper small">
+                <span class="currency-symbol">R$</span>
+                <input type="number" id="input-edit-salary" placeholder="0,00" min="0" step="0.01" inputmode="decimal">
+            </div>
+            <button id="btn-save-salary" class="btn-primary">Atualizar Salário</button>
+            <div class="settings-divider"></div>
+            <label for="select-month" class="input-label">Navegar entre meses</label>
+            <select id="select-month" class="input-select"></select>
+            <div class="settings-divider"></div>
+            <button id="btn-new-month" class="btn-secondary">📅 Iniciar Novo Mês</button>
+            <div class="settings-divider"></div>
+            <button id="btn-clear-data" class="btn-danger">🗑️ Apagar todos os dados</button>
+            <button class="btn-close-modal" id="btn-close-settings" aria-label="Fechar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
